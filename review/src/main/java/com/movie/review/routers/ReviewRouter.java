@@ -16,7 +16,9 @@ public class ReviewRouter {
 		return RouterFunctions
 				.route()
 				.GET("/v1/health", (request) -> ServerResponse.ok().bodyValue("Healthy"))
+				.GET("/v1/review", (request) -> movieReviewHandler.getReview())
 				.POST("/v1/review", (request) -> movieReviewHandler.addReview(request))
+				.PUT("/v1/review/{id}", (request) -> movieReviewHandler.updateReview(request))
 				.build();
 	}
 
