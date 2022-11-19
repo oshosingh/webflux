@@ -62,6 +62,15 @@ public class MovieReviewHandler {
 						.flatMap(savedReview -> ServerResponse.ok().bodyValue(savedReview))
 				);
 	}
+	
+	public Mono<ServerResponse> deleteReview(ServerRequest request) {
+		String reviewId = request.pathVariable("id");
+		var existingReview = movieReviewRepo.findById(reviewId);
+		
+		return existingReview
+			.flatMap(review -> movieReviewRepo.deleteById(reviewId))
+			.then(ServerResponse.noContent().build());
+	}
 
 	private void validate(MovieReviewDto reviewDto) throws ReviewDataException {
 		var constraintViolations = validator.validate(reviewDto);
