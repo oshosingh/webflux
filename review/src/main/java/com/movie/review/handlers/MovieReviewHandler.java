@@ -42,8 +42,9 @@ public class MovieReviewHandler {
 				.flatMap(ServerResponse.status(HttpStatus.CREATED)::bodyValue);
 	}
 
-	public Mono<ServerResponse> getReview() {
-		Flux<MovieReviewDto> reviews = movieReviewRepo.findAll().map(movieReviewMapper::movieReviewDtoFromEntity);
+	public Mono<ServerResponse> getReview(ServerRequest request) {
+		String movieInfoId = request.pathVariable("id");
+		Flux<MovieReviewDto> reviews = movieReviewRepo.findByMovieInfoId(movieInfoId).map(movieReviewMapper::movieReviewDtoFromEntity);
 		return ServerResponse.ok().body(reviews, MovieReviewDto.class);
 	}
 
