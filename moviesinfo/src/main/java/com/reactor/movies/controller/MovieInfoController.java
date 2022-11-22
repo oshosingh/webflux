@@ -2,6 +2,7 @@ package com.reactor.movies.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.reactor.movies.model.MovieInfoDto;
+import com.reactor.movies.model.entity.MovieInfo;
 import com.reactor.movies.service.MovieInfoService;
 
 import reactor.core.publisher.Flux;
@@ -40,6 +42,11 @@ public class MovieInfoController {
 	@GetMapping("/movieinfos/{movieId}")
 	public Mono<MovieInfoDto> getMovieInfoById(@PathVariable String movieId) {
 		return movieInfoService.getMovieInfoById(movieId);
+	}
+	
+	@GetMapping(value = "/movieinfos/stream", produces = MediaType.APPLICATION_NDJSON_VALUE)
+	public Flux<MovieInfo> movieStream() {
+		return movieInfoService.movieStream();
 	}
 	
 	@PutMapping("/movieinfos/{movieId}")

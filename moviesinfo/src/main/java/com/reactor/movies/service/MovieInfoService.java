@@ -6,11 +6,13 @@ import org.springframework.stereotype.Service;
 
 import com.reactor.movies.mapper.MovieMapper;
 import com.reactor.movies.model.MovieInfoDto;
+import com.reactor.movies.model.entity.MovieInfo;
 import com.reactor.movies.repo.MovieInfoRepo;
 import com.reactor.movies.util.MovieInfoUtil;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
 
 @Service
 public class MovieInfoService {
@@ -23,9 +25,12 @@ public class MovieInfoService {
 
 	@Autowired
 	private MovieInfoUtil movieInfoUtil;
+	
+	private Sinks.Many<MovieInfo> movieFluxSink = Sinks.many().replay().all();
 
 	public Mono<MovieInfoDto> saveMovieInfo(MovieInfoDto movieInfoDto) {
 		return movieMapper.getMovieInfoEntity(movieInfoDto).flatMap(movieInfoRepo::save)
+				.doOnNext(movieFluxSink::tryEmitNext)
 				.map(movieMapper::getMovieInfoDtoFromEntity).log();
 	}
 
@@ -56,5 +61,10 @@ public class MovieInfoService {
 
 	public Mono<Void> deleteMovieInfoById(String movieId) {
 		return movieInfoRepo.deleteById(movieId);
+	}
+
+	public Flux<MovieInfo> movieStream() {
+		Flux<MovieInfo> movieInfoFlux = movieFluxSink.asFlux();
+		return movieInfoFlux;
 	}
 }
