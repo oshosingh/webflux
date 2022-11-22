@@ -44,8 +44,8 @@ public class MovieInfoController {
 		return movieInfoService.getMovieInfoById(movieId);
 	}
 	
-	@GetMapping(value = "/movieinfos/stream", produces = MediaType.APPLICATION_NDJSON_VALUE)
-	public Flux<MovieInfo> movieStream() {
+	@GetMapping(value = "/movieinfos/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+	public Flux<String> movieStream() {
 		return movieInfoService.movieStream();
 	}
 	

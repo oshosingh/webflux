@@ -63,8 +63,8 @@ public class MovieInfoService {
 		return movieInfoRepo.deleteById(movieId);
 	}
 
-	public Flux<MovieInfo> movieStream() {
-		Flux<MovieInfo> movieInfoFlux = movieFluxSink.asFlux();
+	public Flux<String> movieStream() {
+		Flux<String> movieInfoFlux = movieFluxSink.asFlux().map(MovieInfo::toString);
 		return movieInfoFlux;
 	}
 }
