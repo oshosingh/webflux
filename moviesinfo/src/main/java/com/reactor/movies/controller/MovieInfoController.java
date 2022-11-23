@@ -59,4 +59,10 @@ public class MovieInfoController {
 	public Mono<Void> deleteMovieInfoById(@PathVariable String movieId) {
 		return movieInfoService.deleteMovieInfoById(movieId);
 	}
+	
+	@PostMapping("/kafka/publish")
+	public ResponseEntity<String> kafkaPublish(@RequestBody MovieInfo movieInfo) {
+		movieInfoService.publishToKafka(movieInfo, "movieinfo");
+		return ResponseEntity.ok().body("published");
+	}
 }
