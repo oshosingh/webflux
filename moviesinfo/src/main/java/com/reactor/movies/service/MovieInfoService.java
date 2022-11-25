@@ -1,7 +1,10 @@
 package com.reactor.movies.service;
 
+import java.time.Duration;
+import java.util.Collections;
 import java.util.Properties;
 
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.deser.std.StringDeserializer;
 import com.reactor.movies.mapper.MovieMapper;
 import com.reactor.movies.model.MovieInfoDto;
 import com.reactor.movies.model.entity.MovieInfo;
@@ -21,6 +25,9 @@ import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
+import reactor.kafka.receiver.KafkaReceiver;
+import reactor.kafka.receiver.ReceiverOptions;
+import reactor.kafka.receiver.ReceiverRecord;
 import reactor.kafka.sender.KafkaSender;
 import reactor.kafka.sender.SenderOptions;
 import reactor.kafka.sender.SenderRecord;
@@ -47,11 +54,10 @@ public class MovieInfoService {
 	private Sinks.Many<MovieInfo> movieFluxSink = Sinks.many().replay().all();
 
 	public Mono<MovieInfoDto> saveMovieInfo(MovieInfoDto movieInfoDto) {
-		return movieMapper.getMovieInfoEntity(movieInfoDto).flatMap(movieInfoRepo::save)
-				.doOnNext(movie -> {
-					movieFluxSink.tryEmitNext(movie);
-					publishToKafka(movie, "movieinfo"); 
-				}).map(movieMapper::getMovieInfoDtoFromEntity).log();
+		return movieMapper.getMovieInfoEntity(movieInfoDto).flatMap(movieInfoRepo::save).doOnNext(movie -> {
+			movieFluxSink.tryEmitNext(movie);
+			publishToKafka(movie, "movieinfo");
+		}).map(movieMapper::getMovieInfoDtoFromEntity).log();
 	}
 
 	public Flux<MovieInfoDto> getMovieInfo() {
@@ -97,20 +103,44 @@ public class MovieInfoService {
 
 			SenderOptions<String, String> senderOptions = SenderOptions.<String, String>create(producerProps)
 					.maxInFlight(1024);
-			
+
 			KafkaSender<String, String> sender = KafkaSender.create(senderOptions);
-			
+
 			Flux<SenderRecord<String, String, String>> senderRecord = Flux
 					.just(SenderRecord.create(topicName, null, null, null, movieInfoJson, null));
-			
+
 			sender.send(senderRecord)
-				.doOnError(e-> log.error("Error occured while publishing data to kafka topic : {} msg : {}", topicName, e.getMessage()))
-				.doOnNext(r-> log.info("Published data to kafka topic : {} metdata : {}", topicName, r.correlationMetadata()))
-				.subscribe();
+					.doOnError(e -> log.error("Error occured while publishing data to kafka topic : {} msg : {}",
+							topicName, e.getMessage()))
+					.doOnNext(r -> log.info("Published data to kafka topic : {} metdata : {}", topicName,
+							r.correlationMetadata()))
+					.subscribe();
 			// subsribe to trigger the actual flow of records
+
+			sender.close();
 
 		} catch (JsonProcessingException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public void consumeFromKafka(String topicName) {
+		Properties consumerProps = new Properties();
+		consumerProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootStrapServers);
+		consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+		consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+
+		ReceiverOptions<String, String> receiverOptions = ReceiverOptions.<String, String>create(consumerProps)
+				.commitBatchSize(1)
+				.commitInterval(Duration.ZERO)
+				.subscription(Collections.singleton(topicName));
+		
+		Flux<ReceiverRecord<String, String>> dataFromKafka = KafkaReceiver.create(receiverOptions).receive();
+		
+		dataFromKafka.subscribe(data -> {
+			log.info("Data from kafka : {}", data);
+			data.receiverOffset().acknowledge();
+		});
+		
 	}
 }

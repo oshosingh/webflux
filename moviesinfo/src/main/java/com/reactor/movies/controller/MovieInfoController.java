@@ -65,4 +65,10 @@ public class MovieInfoController {
 		movieInfoService.publishToKafka(movieInfo, "movieinfo");
 		return ResponseEntity.ok().body("published");
 	}
+	
+	@GetMapping("/kafka/publish")
+	public ResponseEntity<String> kafkaConsumer() {
+		movieInfoService.consumeFromKafka("movieinfo");
+		return ResponseEntity.ok().body("published");
+	}
 }
