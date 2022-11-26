@@ -6,6 +6,7 @@ import java.util.Properties;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,7 +15,6 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.deser.std.StringDeserializer;
 import com.reactor.movies.mapper.MovieMapper;
 import com.reactor.movies.model.MovieInfoDto;
 import com.reactor.movies.model.entity.MovieInfo;
@@ -117,8 +117,6 @@ public class MovieInfoService {
 					.subscribe();
 			// subsribe to trigger the actual flow of records
 
-			sender.close();
-
 		} catch (JsonProcessingException e) {
 			e.printStackTrace();
 		}
@@ -129,6 +127,7 @@ public class MovieInfoService {
 		consumerProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootStrapServers);
 		consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
 		consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+		consumerProps.put(ConsumerConfig.GROUP_ID_CONFIG, "movieinfogroup");
 
 		ReceiverOptions<String, String> receiverOptions = ReceiverOptions.<String, String>create(consumerProps)
 				.commitBatchSize(1)

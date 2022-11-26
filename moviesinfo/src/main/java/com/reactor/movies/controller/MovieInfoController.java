@@ -66,9 +66,9 @@ public class MovieInfoController {
 		return ResponseEntity.ok().body("published");
 	}
 	
-	@GetMapping("/kafka/publish")
+	@GetMapping("/kafka/consume")
 	public ResponseEntity<String> kafkaConsumer() {
 		movieInfoService.consumeFromKafka("movieinfo");
-		return ResponseEntity.ok().body("published");
+		return ResponseEntity.ok().body("consuming");
 	}
 }
