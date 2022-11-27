@@ -5,6 +5,7 @@ import com.reactor.movie.exceptions.MovieInfoClientException;
 import com.reactor.movie.exceptions.MovieInfoServerException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -18,6 +19,9 @@ public class MovieInfoClient {
 
     @Value("${rest.client.movieinfourl}")
     private String movieInfoBaseUrl;
+
+    @Autowired
+    private ReactiveStringRedisTemplate redisTemplate;
 
     public Mono<MovieInfo> getMovieInfoById(String movieId) {
         String url = movieInfoBaseUrl.concat("/{id}");
