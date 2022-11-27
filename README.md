@@ -2,7 +2,7 @@
 
 ## Movies
 1. Get API to fetch movieinfo and moviereview using webclient.
-2. Implemented rate limiters to restrict users from making many requests.
+2. Implemented rate limiters to restrict users from making many requests. <br/>
     -> TokenBucket Algo
 
 
